@@ -1,0 +1,41 @@
+name: Update firecracker formula
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check upstream and update formula
+        id: update
+        run: |
+          new_tag="$(scripts/update-formula.sh)"
+          echo "tag=${new_tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Homebrew
+        if: steps.update.outputs.tag != ''
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Verify formula installs and passes its test
+        if: steps.update.outputs.tag != ''
+        run: |
+          brew style Formula/firecracker.rb
+          brew install --formula ./Formula/firecracker.rb
+          brew test --formula ./Formula/firecracker.rb
+
+      - name: Commit and push
+        if: steps.update.outputs.tag != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/firecracker.rb
+          git commit -m "firecracker ${{ steps.update.outputs.tag }}"
+          git push
