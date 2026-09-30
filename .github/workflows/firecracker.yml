@@ -22,7 +22,7 @@ jobs:
 
       - name: Set up Homebrew
         if: steps.update.outputs.tag != ''
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Verify formula installs and passes its test
         if: steps.update.outputs.tag != ''
